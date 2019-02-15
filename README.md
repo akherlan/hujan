@@ -1,1 +1,3 @@
-Repositori data hujan di wilayah hulu Daerah Aliran Sungai Ciliwung.
+# Analisis Hujan
+
+Membandingkan data hujan satelit terhadap data pengamatan lapangan yang di interpolasi dengan pendekatan geostatistik.
