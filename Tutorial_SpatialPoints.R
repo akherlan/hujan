@@ -1,14 +1,14 @@
 # impor data tabular stasiun hujan
-stat <- read.csv('sta.csv', header = TRUE)
+stat <- read.csv("sta.csv", header = TRUE)
 stat
 
 # ubah data tabular menjadi titik spasial
 library(sp)
-stap <- SpatialPoints(cbind(stat$lon,stat$lat),proj4string = CRS('+proj=longlat +datum=WGS84'))
+stap <- SpatialPoints(cbind(lon=stat$lon,lat=stat$lat),proj4string = CRS('+proj=longlat +datum=WGS84'))
 showDefault(stap)
 
 # visualisasi posisi stasiun pada koordinatnya
-plot(stap, col = 'red', pch=20, cex=1.5, axes = TRUE, las = 1, main = 'Stasiun')
+plot(stap, col = 'red', pch=20, cex=1.5, axes = TRUE, las = 1, main = "Stasiun Pengamatan")
 
 # membuat data hujan secara random
 prec <- runif(nrow(stat), min=0, max=100)
