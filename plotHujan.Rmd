@@ -1,0 +1,252 @@
+---
+title: "Mengolah Data Hujan"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+## Menyiapkan Data dan Memilih Dataset
+
+Hal pertama yang harus dilakukan sebelum melakukan analisis adalah menyiapkan data. Tersedia rekaman data curah hujan sejak tahun 1996 hingga 2014 dari 19 titik koordinat stasiun penakar hujan. Namun begitu, banyak kekosongan data atau kehilangan data pada rentang waktu dan tempat tersebut, sehingga diperlukan analisis mengenai ketersediaan data terlebih dahulu.
+
+Berikut ini merupakan langkah-langkah yang dilakukan untuk mengetahui kelengkapan data.
+
+### Persiapan
+
+Dibutuhkan rekaman data hujan dalam format yang telah disesuaikan sehingga dapat dengan mudah diamati kelengkapannya. Berikut ini merupakan langkah-langkah memanipulasi format data.
+
+```{r library pilih dataset, message=FALSE, warning=FALSE, paged.print=FALSE}
+# library yang dibutuhkan
+library(dplyr)         # untuk manipulasi bentuk data
+library(lubridate)     # untuk manipulasi format tanggal
+library(ggplot2)       # untuk plot grafik
+```
+
+```{r memuat data, message=TRUE, warning=FALSE, paged.print=TRUE}
+load(file = "~/R/hujan/prc/Raingauge/Precip.Rda")   # memuat data rekaman hujan yang telah tersimpan
+Precip <- filter(Precip, !is.na(tgl))               # menghilangkan hari yang seharusnya tidak ada (misal, 29 Februari dan 31 April)
+Precip$NamaStasiun <- as.factor(Precip$NamaStasiun) # kategorisasi nama stasiun hujan
+summary(Precip)
+```
+
+Data yang telah disesuaikan formatnya dapat digunakan untuk melakukan visualisasi ketersediaan rekaman data. Tabel data diberi nama *Precip* dan memuat kolom `$NamaStasiun`, `$LONx` (koordinat bujur), `$LATy` (koordinat lintang), `$tgl` (tanggal), serta kolom `$prc` (curah hujan).
+
+Apabila diperhatikan melalui hasil `summary` data, kolom tanggal `$tgl` dan kolom curah hujan `$prc` sudah tidak terdapat data kosong (*NA*) di dalamnya. Tetapi sesungguhnya masih memuat beberapa tanggal yang rekaman data hujannya memang tidak ada. Hanya saja pada basis data hujan *Precip* memang sudah dihilangkan.
+
+Langkah berikutnya adalah menghitung jumlah stasiun yang memiliki rekaman data pada hari tertentu.
+
+### Menghitung Jumlah Data
+
+```{r hitung jumlah data, message=FALSE, warning=FALSE}
+p.mod <-
+Precip %>%
+  group_by(tgl) %>%
+  summarise(count = sum(as.numeric(ifelse(!is.na(prc), yes = 1, no = 0)))) %>%
+  mutate(persen = (count / nlevels(Precip$NamaStasiun))*100)
+```
+
+Baris kode di atas akan membuat sebuah tabel baru dengan nama *p.mod*, yang merupakan ringkasan dari tabel *Precip*, dengan nilai-nilai yang dibutuhkan untuk membuat visualisasi. Penjelasan lebih lanjut seperti berikut:
+
+1. Bagian `count = ...` bertujuan untuk membuat kolom baru yang berisi hasil hitungan jumlah data. Jika pada hari X stasiun hujan Q memiliki rekaman data, maka akan dihitung satu. Termasuk data nol (0, bukan *NA*) akan ikut dihitung.
+2. Bagian `persen = ...` adalah untuk membuat kolom baru yang berisi perhitungan persentase data hujan harian yang tersedia dari 19 stasiun hujan yang digunakan datanya. Jumlah stasiun yang memiliki rekaman harian (yakni nilai dalam masing-masing sel pada kolom `$count`) dibagi dengan jumlah stasiun (`nlevels(Precip$NamaStasiun)`) kemudian dikali 100 persen.
+
+Apabila diperhatikan, struktur tabel *p.mod* seperti berikut:
+```{r struktur p.mod}
+str(p.mod)   # struktur data
+```
+
+Atau bila dilihat dalam bentuk tabel, seperti di bawah ini:
+```{r tabel [p.mod]}
+head(p.mod)   # menampilkan 6 rekaman data teratas
+```
+
+### Plot Ketersediaan Data
+
+Plot ketersediaan data dilakukan berdasarkan waktu perekamannya. Berikut baris data yang digunakan:
+
+```{r plot ketersediaan data}
+p.mod %>%
+mutate(bulan = month(tgl, label = TRUE, abbr = TRUE),
+      tahun  = year(tgl),
+      hari   = wday(tgl,label=TRUE),
+      pekan  = ceiling(day(tgl)/7)) %>%
+      group_by(bulan, tahun, hari, pekan) %>%
+  
+  ggplot() + aes( hari, pekan, fill = persen) + 
+    geom_tile(colour = "white") + 
+    facet_grid(tahun~bulan) + 
+    scale_fill_gradient2(low="blue", mid="yellow", high="red",
+                         na.value = "grey70", midpoint=50) +
+    theme(axis.title=element_blank(),
+          axis.text=element_blank(),
+          axis.ticks=element_blank(),
+          strip.text=element_text(angle=0),
+          strip.text.y=element_text(angle=0),
+          panel.spacing = unit(0, "lines"))
+```
+
+Seperti dapat diamati pada plot ketersediaan data dari 19 stasiun hujan di Jabodetabek, paling besar persentase ketersediaannya adalah pada 2009. Tetapi, dapat pula dilakukan penyesuaian dengan mengeliminasi jumlah stasiun hujan yang mengalami kehilangan data. Disimpulkan untuk menggunakan data hujan pada 2004 hingga 2009.
+
+Berikutnya, dapat ditinjau lebih lanjut dengan fokus pada rekaman harian hujan 2004 sampai 2009.
+
+### Analisis Penggunaan Data
+
+*Lakukan analisis pada data 2004-2009 dari 19 stasiun hujan dengan cara* `filter()` *menggunakan library* `dplyr`.
+
+## Analisis Data Hujan Land-based
+
+### Persiapan
+
+Impor paket library yang akan digunakan sebagai berikut:
+
+```{r library, message=FALSE, warning=FALSE}
+library("dplyr")
+library("ggplot2")
+library("rgdal")
+library("broom")
+library("gstat") # untuk interpolasi Kriging
+# library("rgeos")
+library("raster") # membuat peta hasil Kriging
+```
+
+### Memuat Data
+
+Impor data curah hujan yang sudah dirapikan dari *Precip.Rda*. Kemudian filter data menjadi hanya stasiun yang punya koordinat saja. Sebut saja `StaDgCoord` (dibuat jadi factor).
+
+```{r Muat Data, warning=FALSE}
+load("~/R/hujan/prc/Raingauge/Precip.Rda")
+StaDgCoord <- filter(Precip,!is.na(LATy))
+StaDgCoord$NamaStasiun <- as.factor(StaDgCoord$NamaStasiun)
+str(StaDgCoord$NamaStasiun) # ada 11 factor
+```
+
+Lihat data.
+
+```{r Lihat Data Precip.Rda}
+str(StaDgCoord)
+nrow(StaDgCoord)
+```
+
+Tersedia 31463 rekaman data harian di 11 stasiun.
+
+### Plot Hujan Januari 2009
+
+Filter hanya hujan pada Januari 2019 pada setiap stasiun hujan. Lalu plot ke dalam grafik untuk melihatnya. Ini sebagai contoh, nanti perlu dibuat analisis mengapa menggunakan data pada rentang sekian. Lebih lengkap lihat di blog Mr. Maggy.
+
+```{r Hujan Jan 2019, echo=TRUE}
+# Filter data
+Sta2009Jan <-
+  StaDgCoord %>%
+      filter(tgl<="2009-01-31") %>%
+      filter(tgl>="2009-01-01")
+
+# Plot grafik
+ggplot(Sta2009Jan, aes(tgl, prc, colour = NamaStasiun)) +
+      theme_grey(base_size = 15) +
+      geom_line() + xlab("Tanggal") + ylab("CH (mm)") +
+      labs(title = "CH Di 11 Stasiun Selama Jan 2019") +
+      scale_colour_manual(values = c("#6e2142", "#943855", "#e16363", "#ffd692", "#ff935c","#dc5353","#a72461","#49beb7","#042f4b","#f7be16","#ad1d45"))
+```
+
+Hasilnya, setiap stasiun terlihat data hujannya. Lanjutkan dengan plot di atas koordinat masing-masing.
+
+### Plot Data Sesuai Koordinat
+
+Langkah-langkahnya:
+
+1. Rata-ratakan dulu hujan Januari 2009 berdasarkan stasiun
+
+```{r Rerata Jan 2019, warning=FALSE}
+Rerata2009Jan             <- aggregate(Sta2009Jan[,5], list(Sta2009Jan$NamaStasiun), mean)
+names(Rerata2009Jan)[1:2] <- c("Stasiun","PrcAvg") # rename nama kolom
+Rerata2009Jan
+```
+
+2. Buat tabel yang berisi data nama stasiun, data koordinat, dan hujannya. Jadi, masing-masing stasiun punya variabel `x = lon`, `y = lat`, dan `z = hujan`.
+
+```{r warning=FALSE}
+LatLon              <- distinct(LatLon <- Sta2009Jan[,1:3]) # ambil koordinat
+BahanPlot           <- data.frame(LatLon,Rerata2009Jan[,2]) # buat tabel
+names(BahanPlot)[4] <- "PrcAvg"                             # rename kolom
+BahanPlot[,]
+```
+
+3. Plot hujan rata-rata Januari 2009 ke masing-masing koordinat stasiun.
+
+```{r Plot Sta Hujan dan Besaran, echo=TRUE}
+ggplot() +
+    geom_point(data = BahanPlot, aes(x = LONx, y = LATy, palette = "RdBu", size = PrcAvg)) +
+    labs(title = "Plot Lokasi Stasiun Sesuai Besaran CH")
+```
+
+4. Muat dan lihat peta format shp.
+
+```{r Load peta shp, message=FALSE, warning=FALSE}
+dasJawa <- readOGR("basin/das_jawa/das_jawa.shp") # import peta shp
+plot(dasJawa) # lihat peta
+```
+
+5. Plot lokasi stasiun untuk melihatnya di atas batas peta DAS.
+
+a. Pertama, buat peta menjadi dataframe (tabel).
+
+```{r Membuat dataframe peta DAS, message=FALSE, warning=FALSE}
+dasJawa_df <- tidy(dasJawa, region = "DAS") # buat dataframe dari polygon
+# atau bisa dasJawa_df <- fortify(dasJawa, region = "DAS")
+```
+
+b. Filter cuma Ciliwung.
+
+```{r}
+das_ciliwung_df <- filter(dasJawa_df,dasJawa_df$id=="CILIWUNG")
+```
+
+c. Plotting dengan zoom ke daerah lokasi stasiun hujan.
+
+```{r echo=TRUE}
+ggplot() +
+  geom_path(data = das_ciliwung_df, aes(x = long, y =lat, group = id)) +
+  geom_point(data = BahanPlot, aes(x = LONx, y = LATy, color = "red", size=0.5)) +
+  labs(title = "Plot Lokasi Stasiun dengan Batas DAS") +
+  coord_fixed(xlim = c(min(Sta2009Jan$LONx)-0.05, max(Sta2009Jan$LONx)+0.05), ylim = c(min(Sta2009Jan$LATy)-0.05, max(Sta2009Jan$LATy)+0.05))
+```
+
+**Untuk membandingkan, kita butuh interpolasinya. Atau sebaliknya, data satelit yang dibuat per titik (untuk timeseries)**
+
+Buat SpatialPointDataFrame
+
+```{r}
+wgs84 <- CRS(+proj=longlat +datum=wgs84)
+BahanPlot.Spat <- SpatialPointsDataFrame(coords = select(BahanPlot, LONx, LATy), data = select(BahanPlot, NamaStasiun, PrcAvg), proj4string = wgs84)
+```
+
+Coba dibuat model variogramnya
+
+```{r message=FALSE, warning=FALSE}
+BahanPlot.Spat$X <- coordinates(BahanPlot.Spat)[,1]
+BahanPlot.Spat$Y <- coordinates(BahanPlot.Spat)[,2]
+f <- as.formula(PrcAvg ~ X + Y) 
+var.smpl <- variogram(object = f, data = BahanPlot.Spat)
+dat.fit  <- fit.variogram(var.smpl, vgm(psill=5, model="Sph", range=30, nugget=0))
+```
+
+Coba plotting hasilnya
+
+```{r}
+plot(var.smpl, dat.fit, xlim=c(0,30))
+```
+
+```{r}
+#dat.krg <- krige( f, BahanPlot.Spat, grd, dat.fit)
+#dat.krg <- krige(f, BahanPlot.Spat)
+```
+
+
+
+## Referensi:
+
+- Belajar subset data: [Datanovia.com](https://www.datanovia.com/en/lessons/subset-data-frame-rows-in-r/)
+- Belajar plot: [Earhtdatascience.com](https://www.earthdatascience.org/courses/earth-analytics/spatial-data-r/make-maps-with-ggplot-in-R/)
+- Juga di sini: [rOpenSci.org](https://ropensci.org/blog/2013/08/18/sciordata/)
+- Belajar interpolasi: [mgimond.github.io](https://mgimond.github.io/Spatial/interpolation-in-r.html)

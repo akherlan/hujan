@@ -1,6 +1,6 @@
 # Analisis Spasial dan Temporal
 
-Proses-proses analisis data spatio-temporal (STDA/ *Spatio-temporal Data Analysis*) menggabungkan dua disiplin ilmu, yakni *geoinformation science* dan *spatio-temporal statistics*. Dapat disederhanakan dalam bentuk matematika sebagai STDA = GIS + *statistics*. Sedangkan proses-proses dalam spatio-temporal diantaranya termasuk *image processing*, analisis pola titik, geostatistik, dan geomorfometri (Hengl, 2009).
+Proses-proses analisis data spatio-temporal (STDA/ *Spatio-temporal Data Analysis*) menggabungkan dua disiplin ilmu, yakni ilmu geoinformasi (*geoinformation science*) dan statistika spasio-temporal (*spatio-temporal statistics*). Dapat disederhanakan dalam bentuk matematika sebagai STDA = GIS + Statistka. Sedangkan proses-proses dalam spasio-temporal diantaranya termasuk *image processing*, analisis pola titik, geostatistik, dan geomorfometri (Hengl, 2009).
 
 ![STDA](ilmu-spatio-temporal.png)
 
@@ -8,14 +8,14 @@ Disiplin ilmu geostatistik merupakan irisan atau sebagian dari metode analisis d
 
 ![STDA](metode-spatio-temporal.png)
 
-Suatu data atau objek pengukuran dapat dikategorikan sebagai spatio-temporal setidaknya ditentukan oleh empat parameter (Hengl, 2009), yakni:
+Suatu data atau objek pengukuran dapat dikategorikan sebagai spasio-temporal setidaknya ditentukan oleh empat parameter (Hengl, 2009), yakni:
 
 1. Lokasi geografis (longitude dan latitude, atau proyeksi koordinat x, y)
 2. Ketinggian di atas permukaan tanah (elevasi)
 3. Waktu pengukuran (tahun, bulan, hari, jam, menit, dan lain-lain)
-4. Besaran yang diukur
+4. Besaran yang diukur (dalam hal ini curah hujan)
 
-Jika tanpa parameter waktu, maka hanya menjadi analisis spasial. Analisis spasial merupakan proses manipulasi informasi spasial. Proses analisis ini dilakukan guna mengembangkan data pengukuran dan/ atau perhitungan yang orisinil menjadi informasi baru yang memiliki arti. Melalui proses tersebut diharapkan dapat diambil sebuah keputusan.
+Jika tanpa parameter waktu, maka hanya menjadi analisis spasial. Analisis spasial merupakan proses manipulasi informasi spasial. Proses analisis ini dilakukan guna mengembangkan data pengukuran dan/atau perhitungan yang orisinil menjadi informasi baru yang memiliki arti. Melalui proses tersebut diharapkan dapat ditentukan sebuah keputusan.
 
 Sebagai sebuah metode, analisis spasial berusaha untuk membantu penggunanya menganalisis kondisi dalam suatu permasalahan berdasarkan data dari wilayah yang menjadi sasaran. Konsep-konsep yang mendasari sebuah analisis spasial adalah jarak, arah, dan hubungan. Kombinasi dari ketiganya akan bervariasi pada setiap wilayah yang berbeda sehingga membentuk karakteristik yang unik (Cholid, 2009:5). (*Rujukan:* [web, cari buku/jurnalnya](https://iam-ismail.blogspot.com/2011/09/konsep-analisis-spasial-untuk.html))
 
@@ -59,7 +59,7 @@ Interpolasi spasial adalah proses penggunaan titik-titik yang telah diketahui ni
 
 Interpolasi spasial dapat mengestimasi besaran hujan dan parameter hidrologi lain untuk berbagai lokasi yang tidak memiliki data rekaman. Caranya dengan menggunakan hasil bacaan hujan yang telah diketahui pada lokasi pengamatan yang berada di dekatnya.
 
-![temperature map](/home/chspwn/Desktop/temperature_map.png)
+![temperature map](temperature_map.png)
 
 Gambar: Peta interpolasi temperatur dari stasiun-stasiun pengamat cuaca di Afrika Selatan.
 

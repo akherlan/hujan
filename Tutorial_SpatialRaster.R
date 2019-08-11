@@ -5,7 +5,7 @@
 
 # impor dan baca file netcdf
 library("RNetCDF")
-input <- "./raw/rain/3B-DAY-E.MS.MRG.3IMERG.20140312-S000000-E235959.V05.nc4.nc4" # ganti alamat datanya
+input <- "prc/TRMM_3B42RT_Daily_V7/3B42RT_Daily.20000301.7.nc4.nc4" # ganti alamat datanya
 file <- open.nc(input)
 nc <- read.nc(file)
 
@@ -16,10 +16,10 @@ proj <- CRS("+proj=longlat +datum=WGS84")
 
 # membuat raster data hujan
 library("raster")
-prc <- raster(nc$precipitationCal)
+prc <- raster(nc$precipitation)
 extent(prc) <- c(min(lon), max(lon), min(lat), max(lat)) # barat, timur, selatan, utara
 proj4string(prc) <- proj
-plot(prc)
+plot(prc, main = "2000-03-01")
 
 # plot titik stasiun hujan
 library("dplyr")
@@ -30,7 +30,7 @@ plot(stapoin, pch=16, col="red", add = TRUE)
 
 # plot batas DAS
 library("rgdal")
-shp <- "./basin/ciliwung/ciliwung.shp" # ganti alamat file shp-nya
+shp <- "basin/ciliwung/ciliwung.shp" # ganti alamat file shp-nya
 shp <- readOGR(shp)
 shp <- spTransform(shp, proj)
 plot(shp, bg="transparent", add=TRUE)
