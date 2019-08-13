@@ -1,9 +1,3 @@
-head(Precip)
-library("dplyr")
-
-P <- Precip %>%
-        dplyr::filter(!is.na(LONx))
-
 #################   LATIHAN   ##############
 
 library(MASS)
